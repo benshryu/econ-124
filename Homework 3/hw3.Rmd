@@ -1,0 +1,148 @@
+---
+title: "hw3"
+output: html_document
+---
+```{r setup, include=FALSE}
+install.packages('plyr', repos = "http://cran.us.r-project.org")
+library(gamlr)
+```
+
+
+```{r Question 1}
+# Question 1
+data <- read.csv("NY_stop_frisk.csv")
+names(data)
+# factoring binary and nonumeric categorical
+data$INOUT <- factor(data$INOUT)
+data$TYPEOFID <- factor(data$TYPEOFID)
+data$EXPLNSTP <- factor(data$EXPLNSTP)
+data$OTHPERS <- factor(data$OTHPERS)
+data$SUMISSUE <- factor(data$SUMISSUE)
+data$SEARCHED <- factor(data$SEARCHED)
+data$RADIO <- factor(data$RADIO)
+data$AC_REPT <- factor(data$AC_REPT)
+data$AC_INVES <- factor(data$AC_INVES)
+data$RF_VCRIM <- factor(data$RF_VCRIM)
+data$RF_OTHSW <- factor(data$RF_OTHSW)
+data$AC_PROXM <- factor(data$AC_PROXM)
+data$RF_ATTIR <- factor(data$RF_ATTIR)
+data$CS_OBJCS <- factor(data$CS_OBJCS)
+data$CS_DESCR <- factor(data$CS_DESCR)
+data$CS_CASNG <- factor(data$CS_CASNG)
+data$CS_LKOUT <- factor(data$CS_LKOUT)
+data$RF_VCACT <- factor(data$RF_VCACT)
+data$CS_CLOTH <- factor(data$CS_CLOTH)
+data$CS_DRGTR <- factor(data$CS_DRGTR)
+data$AC_EVASV <- factor(data$AC_EVASV)
+data$AC_ASSOC <- factor(data$AC_ASSOC)
+data$CS_FURTV <- factor(data$CS_FURTV)
+data$RF_RFCMP <- factor(data$RF_RFCMP)
+data$AC_CGDIR <- factor(data$AC_CGDIR)
+data$RF_VERBL <- factor(data$RF_VERBL)
+data$CS_VCRIM <- factor(data$CS_VCRIM)
+data$CS_BULGE <- factor(data$CS_BULGE)
+data$AC_INCID <- factor(data$AC_INCID)
+data$AC_TIME <- factor(data$AC_TIME)
+data$RF_KNOWL <- factor(data$RF_KNOWL)
+data$AC_OTHER <- factor(data$AC_OTHER)
+data$SB_HDOBJ <- factor(data$SB_HDOBJ)
+data$SB_OUTLN <- factor(data$SB_OUTLN)
+data$SB_ADMIS <- factor(data$SB_ADMIS)
+data$SB_OTHER <- factor(data$SB_OTHER)
+data$SB_OTHER <- factor(data$SB_OTHER)
+data$RF_FURT <- factor(data$RF_FURT)
+data$RF_BULG <- factor(data$RF_BULG)
+data$SEX <- factor(data$SEX)
+data$RACE <- factor(data$RACE)
+data$HAIRCOLR <- factor(data$HAIRCOLR)
+data$EYECOLOR <- factor(data$EYECOLOR)
+data$BUILD <- factor(data$BUILD)
+
+data <- naref(data)
+```
+# Question 2:
+
+# b:
+The optimal penalty is considered small and this model would be considered complex as the optimal penalty is at the begin of the path deviating from zero(rigthside)
+
+# c:
+out 121 coef 40 coef were non-zero, and much like part b we are to consider this to be complex as there is still a lot of non-zero coef
+
+# d:
+What is unusual about this shapes is that the lowest binomial deviance(varaince) is at the start of the curve indication a complex model, but because
+
+# e:
+I am suprised that race, age, body build were not included. Especially because these are physical traits and is often used as way to profile people in biased ways.
+
+```{r Question 2}
+# Question 2
+data_omit_seach_PF <- subset(data, select = -c(13:22))
+# a
+cv.X <- sparse.model.matrix(FRISKED ~ ., data = naref(data_omit_seach_PF))[,-1]
+set.seed(0)
+cv.lasso_model_10 <- cv.gamlr(cv.X, data_omit_seach_PF$FRISKED, family="binomial", nfold = 10)
+
+# b
+plot(cv.lasso_model_10)
+plot(cv.lasso_model_10$gamlr, main = "Lasso Regularization path", ylim = c(-8, 2), xlim = c(-6, -1))
+
+
+# c
+cv.coef <- coef(cv.lasso_model_10, select="min")
+length(coef(cv.lasso_model_10))
+length(which(cv.coef!=0))
+
+
+# d
+
+# e
+cv.coef
+
+```
+# Question 3:
+
+# a:
+The histogram indicates that the  algorithm is certain about the category of each observation as most variables are 0 or 1.
+But when looking at our box plot we can see that our algorithm is over fitted and is not great at making prediction
+
+# b:
+Much like how we stated earlier we can see that our model is over fitted but it seems like it is very sensitive, sensitive enough to be a good indicator of being frisked. We can see that all our dots in both IS and OOS is fitted really well. Which does not align with our statements earlier we expected to see that a over fitted complex model not be a good model for prediction. But on the other hand it does mean that our histogram is correct.
+
+# c:
+I would not recommend my model, I do not like the fact that the model is over fitted and that my box plot indicates a lot of points outside of the box, indicating a bad prediction. Also I am worried about some key variables not being a non zero, in any case the complexity of the model and amount of nonzero coef is an alarm for concern with the model.
+```{r Question 3}
+# Question 3
+
+# a
+pred <- drop(predict(cv.lasso_model_10$gamlr, cv.X, type = "response"))
+boxplot(pred ~ data_omit_seach_PF$FRISKED, xlab="Frisked", ylab="Probability of Frisk", col=c("blue","red"))
+hist(pred, main = "Histogram of Prediction of being Frisked", xlab="Probability of Frisk", ylab="Frisked")
+
+# b
+source("~/ECON124/Homework 3/roc.R")
+par(mai=c(.9,.9,.2,.1)) # format margins
+roc(pred, data_omit_seach_PF$FRISKED, bty="n", main="IS ROC") 
+
+points(x=1-mean((pred<=.02)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>.02)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='red') 
+points(x=1-mean((pred<=.1)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>.1)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='blue') 
+points(x=1-mean((pred<=0.33)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>0.33)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='green') 
+points(x=1-mean((pred<=0.8)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>0.8)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='yellow')
+points(x=1-mean((pred<=0.9)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>0.9)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='purple')
+
+legend("bottomright",fill=c("red","blue", "green", "yellow", "purple"), legend=c("p=0.02","p=0.1", "p=0.33", "p=0.8", "p=0.9"),bty="n",title="cutoffs")
+
+set.seed(0)
+test <- sample.int(1000,500)
+lasso_model_half <- gamlr(cv.X[-test,], data_omit_seach_PF$FRISKED[-test], family = "binomial")
+pred_oos <- predict(lasso_model_half, cv.X[test,], type="response")
+Y_oos <- data_omit_seach_PF$FRISKED[test]
+roc(pred_oos, Y_oos, bty="n", main="OOS ROC")
+
+points(x=1-mean((pred_oos<=.02)[Y_oos==0]), y=mean((pred_oos>.02)[Y_oos==1]), cex=1.5, pch=20, col='red') 
+points(x=1-mean((pred_oos<=.1)[Y_oos==0]), y=mean((pred_oos>.1)[Y_oos==1]), cex=1.5, pch=20, col='blue') 
+points(x=1-mean((pred_oos<=0.33)[Y_oos==0]), y=mean((pred_oos>0.33)[Y_oos==1]), cex=1.5, pch=20, col='green') 
+points(x=1-mean((pred_oos<=0.8)[Y_oos==0]), y=mean((pred_oos>0.8)[Y_oos==1]), cex=1.5, pch=20, col='yellow')
+points(x=1-mean((pred_oos<=0.9)[Y_oos==0]), y=mean((pred_oos>0.9)[Y_oos==1]), cex=1.5, pch=20, col='purple')
+legend("bottomright",fill=c("red","blue", "green", "yellow", "purple"), legend=c("p=0.02","p=0.1", "p=0.33", "p=0.8", "p=0.9"),bty="n",title="cutoffs")
+
+```

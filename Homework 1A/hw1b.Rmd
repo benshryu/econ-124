@@ -1,0 +1,105 @@
+---
+title: "HW1B"
+output: html_document
+---
+```{r setup, include=FALSE}
+install.packages('plyr', repos = "http://cran.us.r-project.org")
+
+library(readstata13)
+fndat <- read.dta13("fakenews.dta")
+sdat <- read.dta13("survey.dta")
+```
+
+```{r hw1b question 6}
+# Question 6
+#logistic regression
+logreg <- glm(sdat$UseSocialMedia ~ sdat$Voted_Trump + sdat$Income + sdat$Educ_Years + sdat$Age, data = sdat, family = 'binomial')
+summary(logreg)
+```
+My result saw that C.P. an individual is 6.5% point more likely to use social media when they voted for trump compared those who did not even when accounting for income, education years, and age.But we do see that the variable is statically insignificant at 95% confidence interval. Other variable such as the education years and age was more statically significant to ether or not an individual used social media. 
+
+```{r hw1b question 6 b}
+# B
+logreg$deviance / logreg$null.deviance
+```
+0.9030694 is our fit for our logit regression which is our R squared
+
+```{r hw1b question 6 c}
+# C
+(exp(coef(logreg)["sdat$Voted_Trump"])-1)*100
+(coef(logreg)["sdat$Voted_Trump"])*100
+```
+The odds of social media use for being Trump voter is 6.719416% point
+
+```{r hw1b question 7}
+# Question 7
+df <- sdat[sdat$Heard == "Yes",]
+source <- tapply(rep(1, nrow(df)), df$BarLabel, sum)
+source2 <- tapply(rep(1, nrow(df)), df[,c("ThoughtTrue", "BarLabel")], sum)
+thoughtcol <- c("red", "yellow", "green")
+labelcol <- c("green", "red", "orange", "blue")
+barplot(source, main = "Most Important Source of News", ylab = "Article", col =  labelcol) 
+legend("topright", c("Big True", "Fake", "Placebo", "Small True"), fill= labelcol)
+barplot(source2, main = "Most Important Source of News", ylab = "Article", col =  thoughtcol) 
+legend("topright", c("Yes", "Not Sure", "No"), fill= thoughtcol)
+```
+
+```{r hw1b question 8 a}
+# Question 8
+# A
+pf <- sdat[sdat$BarLabel == "Fake" | sdat$BarLabel == "Placebo",]
+pf$BarLabelbi <- ifelse(pf$BarLabel == "Fake", 1, 0)
+pf$Heardbi <- ifelse(pf$Heard == "Yes", 1, 0)
+```
+Setting up for the regression
+
+```{r hw1b question 8 b}
+# B
+reg <-  glm(pf$BarLabelbi ~ pf$Heardbi, data =  pf)
+summary(reg)
+```
+my finding saw that C.P. when an individual heard about an article they were 3.2834% point more likely the article to be false compared to hearing a placebo.
+
+```{r hw1b question 9 a-b}
+# Question 9
+# A
+K <- ifelse(sdat$BarLabel != "Fake" | sdat$BarLabel != "Placebo" & sdat$ThoughtTrue == "Yes", 1, ifelse(sdat$ThoughtTrue == "Not sure", 0.5, 0))
+# B
+Party <- ifelse(sdat$Democrat == 1, 1, 0)
+```
+making our variable 
+
+```{r hw1b question 9 c}
+# C
+reg <- glm(K~Party, data = sdat)
+summary(reg)
+```
+In our regression we saw that when a individual is Democrat they are 0.5639% point more likely to correctly identifies whether the article is true or false
+
+```{r hw1b question 9 D}
+# D
+reg <- glm(K~Party + sdat$Income + sdat$Educ_Years + sdat$Age, data = sdat)
+summary(reg)
+```
+We controlled for Income, education years, and age, we chose these controls because these factor tend to split voters into either party, younger people tend to be democrats, higher income tend to be republican and educ also contributed towards the split. With the control there was evens smaller % point at 0.49309% point with 0.07081 less likely to be correct.
+
+```{r hw1b question 10 a}
+# Question 10
+# A
+B <- ifelse(sdat$ThoughtTrue == "Yes", 1, ifelse(sdat$ThoughtTrue == "Not sure", 0.5, 0))
+```
+setting var
+
+```{r hw1b question 10 b}
+# B
+reg <- glm(B~Party, data = sdat)
+summary(reg)
+```
+We found that if individual is Democrat they are 0.9322% point more likely to believe that an article is true then a Republican. 
+
+```{r hw1b question 10 c}
+# C
+regint <- glm(B~Party + sdat$Democrat*sdat$ArticleProClinton + sdat$Republican*sdat$ArticleProTrump, data = sdat)
+summary(regint)
+```
+We find when we add our two interactions: Democrat and pro Clinton, and Republican and pro Trump, that an democrat is 0.6255% point more likely to believe that they are correct when compared to previous regression, but we do find that our variable is less statically significant, dropping from 0.001 to 0.05. we also take note that sdat$ArticleProTrump or pro Trump provide N/A this is because the variable ArticleProClinton already accounts for the pro Trump dummy/binary variable as they "cancel" each other out

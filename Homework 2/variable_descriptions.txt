@@ -1,0 +1,25 @@
+For the purposes of the homework, it's not important for you to understand what all the different stats mean, but for reference, here are descriptions for those whose names are not obvious:
+
+- Tm: abbreviation for NBA team
+- G: games played
+- MP: minutes played
+- PER: player efficiency rating (measure of a player's per-minute performance)
+- TS: true shooting percentage (measure of how accurately they shot)
+- X3PAr: 3 point attempt rate
+- FTr: free throw rate
+- ORB: % of offensive rebounds grabbed
+- DRB: % of defensive rebounds grabbed
+- TRB: % of total rebounds grabbed
+- AST: % of teammate field goals assisted
+- STL: % of opponent possessions stolen
+- BLK: % of opponent 2-point attempts blocked
+- TOV: % of turnovers committed per 100 plays
+- USG: usage percentage (% of team plays used by player)
+- OWS: offensive win shares - number of wins contributed by player due to his offense
+- DWS: defensive win shares - number of wins contributed by player due to his defense
+- WS: win shares - number of wins contributed by player
+- WS.48: win shares per 48 minutes
+- OBPM: offensive plus/minus - estimate of offensive points per 100 possessions contributed above a league-average player
+- DBPM: defensive plus/minus
+- BPM: plus/minus - estimate of points per 100 possessions contributed above a league-average player
+- VORP: value over replacement player - estimate of points per 100 team possessions contributed above a replacement-level player

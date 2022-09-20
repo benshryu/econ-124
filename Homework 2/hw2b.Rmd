@@ -1,0 +1,161 @@
+---
+title: "hw2b"
+output: html_document
+---
+```{r setup, include=FALSE}
+install.packages('plyr', repos = "http://cran.us.r-project.org")
+library(gamlr)
+data <- read.csv("NBA.csv")
+data$Tm <- factor(data$Tm)
+
+# Question 2
+is.na(data)
+data_omit <- na.omit(data)
+set.seed(0)
+data_omit_usa <- data_omit[data_omit$NBA_Country == "USA",]
+K <- 10
+folds <- rep(1:K,each=ceiling(nrow(data_omit_usa)/K))
+folds
+permute_observations <- sample(1:nrow(data_omit_usa))
+permute_observations
+random_folds <- folds[permute_observations]
+random_folds
+training_set <- random_folds!= 10
+data_omit_usa[training_set,]
+test_set <- random_folds==10
+data_omit_usa[test_set,]
+nrow(data[test_set,])/nrow(data_omit_usa)
+data_omit_usa_subset <- subset(data_omit_usa, select = -c(1, 3))
+training_data <- data_omit_usa_subset[training_set,]
+test_data <- data_omit_usa_subset[test_set,]
+```
+
+```{r Question 8}
+# Question 8
+# a
+test_data <- naref(test_data)
+training_data <-naref(training_data)
+
+# b
+X <- model.matrix(~ .,data = training_data)[,-1]
+```
+
+# Question 9:
+
+# b:
+As the graph moves left to right the coef turns into zero, the lasso penalty leads to the lambda approaching 0 to turn remaining coef to 0 
+
+# c:
+larger the lambda the larger the penalty which means less complexity which increase the bias and the variance decrease 
+
+```{r Question 9}
+# Question 9
+# a
+lasso_model <- gamlr(X, log(training_data$Salary))
+
+plot(lasso_model, ylab="estimated betas", ylim = c(-0.5, 1))
+
+```
+
+# Question 10:
+"CV gives us K estimates of the sample deviance, one for each of the held out folds". we are looking for the lambda with lowest sample deviance. we understand that the r-squared represents the proportion of the variance for a dependent variable. So when we have a higher r-squared we have more variance and lower bias and more complex model. So as our model close to 0 we see an increase in variance and lower bias.
+
+```{r Question 10}
+# Question 10
+set.seed(0)
+cv.X <- model.matrix(~ ., data = data_omit_usa_subset)[,-1]
+cv.lasso_model <- cv.gamlr(cv.X, log(data_omit_usa_subset$Salary))
+plot(cv.lasso_model, main = "Cross Validation Model")
+
+```
+
+#Question 11:
+STL. has the highest everything else of the following stats: TRB, AST, BLK, BPM is a 0
+
+```{r Question 11}
+set.seed(0)
+cv.lasso_model_10 <- cv.gamlr(cv.X, log(data_omit_usa_subset$Salary), nfold = 10)
+plot(cv.lasso_model_10, main = "Model with 10 Folds")
+
+cv.betas <- coef(cv.lasso_model_10$gamlr)[-1,]
+nonzeros <- cv.betas[which(cv.betas!=0)]
+cv.betas["TRB."]
+cv.betas["AST."]
+cv.betas["STL."]
+cv.betas["BLK."]
+cv.betas["BPM"]
+nonzeros
+
+par(mfrow=c(2,1))
+plot(cv.lasso_model, main = "Cross Validation Model")
+plot(cv.lasso_model_10, main = "Model with 10 Folds")
+
+```
+
+# Question 12:
+The CV has more non zero
+
+```{r Question 12}
+# Question 12
+betas <- coef(lasso_model)[-1,]
+aicc.nonzeros <- betas[which(cv.betas!=0)]
+betas
+cat("\n")
+cv.betas
+
+```
+
+
+
+```{r Question 13}
+# Question 13
+cat("IS Dev", lasso_model$deviance[which.min(lasso_model$deviance)], "\n", sep = " ")
+
+OOS <- model.matrix(~ .,data = test_data)[,-1]
+pred_model <- predict(lasso_model, newdata = OOS)
+OOS_dev <- 1 - (log(test_data$Salary) - pred_model)^2/(log(test_data$Salary) - mean(log(training_data$Salary)))
+lasso_model_OOS <- gamlr(OOS, log(test_data$Salary))
+
+cat("OOS Dev", lasso_model_OOS$deviance[which.min(lasso_model_OOS$deviance)], "or" , mean(OOS_dev), "\n", sep = " ")
+
+OOS_dev
+
+```
+
+# Question 14:
+
+# b:
+831 inputs covariates with 100 segments, I would assume that the ols cant take an matrix with 100 segments 
+
+# c:
+IS Dev 56.07471, OOS Dev 0.1123694 
+
+```{r Question 14}
+# Question 14
+# a
+X_inter <- model.matrix(~ . + Tm*., data = training_data)[,-1]
+lasso_model_inter <- gamlr(X_inter, log(training_data$Salary))
+cat("IS Dev", lasso_model_inter$deviance[which.min(lasso_model_inter$deviance)], "\n", sep = " ")
+
+OOS_inter <- model.matrix(~ . + Tm*.,data = test_data)[,-1]
+pred_model_inter <- predict(lasso_model_inter, newdata = OOS_inter)
+OOS_inter_dev <- 1 - (log(test_data$Salary) - pred_model_inter)^2/(log(test_data$Salary) - mean(log(training_data$Salary)))
+lasso_model_OOS_inter <- gamlr(OOS_inter, log(test_data$Salary))
+cat("OOS Dev", lasso_model_OOS_inter$deviance[which.min(lasso_model_OOS_inter$deviance)], "or", mean(OOS_inter_dev),"\n", sep = " ")
+OOS_inter_dev
+
+```
+
+# Question 15:
+According to the AICc LeBron James is overpaid whether we include interaction or not while our CV model at non specific K-fold and k-fold 10 he is considered underpaid
+```{r Question 15}
+#lebron <- cv.X[data_omit_usa_subset$Salary == 33285709,]
+new_pred_model <- predict(lasso_model, newdata = X)
+cv.pred_model <- predict(cv.lasso_model, newdata = cv.X)
+cv.pred_model_10 <- predict(cv.lasso_model_10, newdata = cv.X)
+pred_model_inter <- predict(lasso_model_inter, newdata = X_inter)
+exp(new_pred_model[which(data_omit_usa_subset$Salary == 33285709)])
+exp(pred_model_inter[which(data_omit_usa_subset$Salary == 33285709)])
+exp(cv.pred_model[which(data_omit_usa_subset$Salary == 33285709)])
+exp(cv.pred_model_10[which(data_omit_usa_subset$Salary == 33285709)])
+```

@@ -1,0 +1,113 @@
+# Get the working directory
+getwd()
+# Change the working directory
+setwd("/Users/Tonkos/OneDrive/Documents/ECON124/Homework 3")
+install.packages("gamlr")
+library(gamlr)
+
+# Question 1
+data <- read.csv("NY_stop_frisk.csv")
+names(data)
+
+data$INOUT <- factor(data$INOUT)
+data$TYPEOFID <- factor(data$TYPEOFID)
+data$EXPLNSTP <- factor(data$EXPLNSTP)
+data$OTHPERS <- factor(data$OTHPERS)
+data$SUMISSUE <- factor(data$SUMISSUE)
+data$SEARCHED <- factor(data$SEARCHED)
+data$RADIO <- factor(data$RADIO)
+data$AC_REPT <- factor(data$AC_REPT)
+data$AC_INVES <- factor(data$AC_INVES)
+data$RF_VCRIM <- factor(data$RF_VCRIM)
+data$RF_OTHSW <- factor(data$RF_OTHSW)
+data$AC_PROXM <- factor(data$AC_PROXM)
+data$RF_ATTIR <- factor(data$RF_ATTIR)
+data$CS_OBJCS <- factor(data$CS_OBJCS)
+data$CS_DESCR <- factor(data$CS_DESCR)
+data$CS_CASNG <- factor(data$CS_CASNG)
+data$CS_LKOUT <- factor(data$CS_LKOUT)
+data$RF_VCACT <- factor(data$RF_VCACT)
+data$CS_CLOTH <- factor(data$CS_CLOTH)
+data$CS_DRGTR <- factor(data$CS_DRGTR)
+data$AC_EVASV <- factor(data$AC_EVASV)
+data$AC_ASSOC <- factor(data$AC_ASSOC)
+data$CS_FURTV <- factor(data$CS_FURTV)
+data$RF_RFCMP <- factor(data$RF_RFCMP)
+data$AC_CGDIR <- factor(data$AC_CGDIR)
+data$RF_VERBL <- factor(data$RF_VERBL)
+data$CS_VCRIM <- factor(data$CS_VCRIM)
+data$CS_BULGE <- factor(data$CS_BULGE)
+data$AC_INCID <- factor(data$AC_INCID)
+data$AC_TIME <- factor(data$AC_TIME)
+data$RF_KNOWL <- factor(data$RF_KNOWL)
+data$AC_OTHER <- factor(data$AC_OTHER)
+data$SB_HDOBJ <- factor(data$SB_HDOBJ)
+data$SB_OUTLN <- factor(data$SB_OUTLN)
+data$SB_ADMIS <- factor(data$SB_ADMIS)
+data$SB_OTHER <- factor(data$SB_OTHER)
+data$SB_OTHER <- factor(data$SB_OTHER)
+data$RF_FURT <- factor(data$RF_FURT)
+data$RF_BULG <- factor(data$RF_BULG)
+data$SEX <- factor(data$SEX)
+data$RACE <- factor(data$RACE)
+data$HAIRCOLR <- factor(data$HAIRCOLR)
+data$EYECOLOR <- factor(data$EYECOLOR)
+data$BUILD <- factor(data$BUILD)
+
+
+# Question 2
+data_omit_seach_PF <- subset(data, select = -c(13:22))
+data_omit_seach_PF <- naref(data_omit_seach_PF)
+# a
+cv.X <- sparse.model.matrix(FRISKED ~ ., data = data_omit_seach_PF)[,-1]
+set.seed(0)
+cv.lasso_model_10 <- cv.gamlr(cv.X, data_omit_seach_PF$FRISKED, family="binomial", nfold = 10)
+
+# b
+plot(cv.lasso_model_10)
+plot(cv.lasso_model_10$gamlr, main = "Lasso Regularization path", ylim = c(-8, 2), xlim = c(-6, -1))
+
+
+# c
+cv.coef <- coef(cv.lasso_model_10, select="min")
+cv.coef[which(cv.coef!=0)]
+
+# d
+
+# e
+
+
+# Question 3
+
+# a
+pred <- drop(predict(cv.lasso_model_10$gamlr, cv.X, type = "response"))
+hist(pred, xlab="Frisked", ylab="Probability of Frisk")
+
+# b
+
+source("~/ECON124/Homework 3/roc.R")
+par(mai=c(.9,.9,.2,.1)) # format margins
+roc(pred, data_omit_seach_PF$FRISKED, bty="n", main="IS ROC") # from roc.R
+
+points(x=1-mean((pred<=.02)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>.02)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='red') 
+points(x=1-mean((pred<=.1)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>.1)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='blue') 
+points(x=1-mean((pred<=0.33)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>0.33)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='green') 
+points(x=1-mean((pred<=0.8)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>0.8)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='yellow')
+points(x=1-mean((pred<=0.9)[data_omit_seach_PF$FRISKED==0]), y=mean((pred>0.9)[data_omit_seach_PF$FRISKED==1]), cex=1.5, pch=20, col='purple')
+
+legend("bottomright",fill=c("red","blue", "green", "yellow", "purple"), legend=c("p=0.02","p=0.1", "p=0.33", "p=0.8", "p=0.9"),bty="n",title="cutoffs")
+
+set.seed(0)
+test <- sample.int(1000,500)
+lasso_model_half <- gamlr(cv.X[-test,], data_omit_seach_PF$FRISKED[-test], family = "binomial")
+pred_oos <- predict(lasso_model_half, cv.X[test,], type="response")
+Y_oos <- data_omit_seach_PF$FRISKED[test]
+roc(pred_oos, Y_oos, bty="n", main="OOS ROC")
+
+points(x=1-mean((pred_oos<=.02)[Y_oos==0]), y=mean((pred_oos>.02)[Y_oos==1]), cex=1.5, pch=20, col='red') 
+points(x=1-mean((pred_oos<=.1)[Y_oos==0]), y=mean((pred_oos>.1)[Y_oos==1]), cex=1.5, pch=20, col='blue') 
+points(x=1-mean((pred_oos<=0.33)[Y_oos==0]), y=mean((pred_oos>0.33)[Y_oos==1]), cex=1.5, pch=20, col='green') 
+points(x=1-mean((pred_oos<=0.8)[Y_oos==0]), y=mean((pred_oos>0.8)[Y_oos==1]), cex=1.5, pch=20, col='yellow')
+points(x=1-mean((pred_oos<=0.9)[Y_oos==0]), y=mean((pred_oos>0.9)[Y_oos==1]), cex=1.5, pch=20, col='purple')
+legend("bottomright",fill=c("red","blue", "green", "yellow", "purple"), legend=c("p=0.02","p=0.1", "p=0.33", "p=0.8", "p=0.9"),bty="n",title="cutoffs")
+

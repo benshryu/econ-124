@@ -1,0 +1,57 @@
+BACKGROUND INFO
+
+The file survey.dta contains data from an online survey of 1208 US adults aged 18+ conducted in late November of 2016. Note that this is by no means a random sample of the US. The survey asked about demographics, political affiliation, voting, and consumption of social media and election news. The survey authors also selected 30 political news headlines and randomly showed 15 to each respondent. For each headline they asked "Do you recall seeing this reported or discussed prior to the election?" and "At the time of the election, would your best guess have been that this statement was true?"
+
+There are five categories of headlines, each with six headlines. Within each category, there is an equal split of pro-Clinton and pro-Trump headlines. The first category contains six fake news stories mentioned in three mainstream media articles (one in the New York Times, one in the Wall Street Journal, and one in BuzzFeed) discussing fake news during the week of November 14, 2016. The second category contains the four most recent pre-election headlines from each of Snopes and PolitiFact deemed to be unambiguously false. These two categories are referred to in the data as "Fake." The third category contains the most recent six major election stories from the Guardian’s election timeline. The fourth category contains the two most recent pre-election headlines from each of Snopes and PolitiFact deemed to be unambiguously true. The third and fourth categories are referred to in the data as "Big True" and "Small True," respectively, or collectively as "True." The headlines in these four categories appeared on or before 11/7/16. The fifth and final category contains news headlines damaging to either Clinton or Trump that were entirely MADE UP by the survey authors. These are referred to as "Placebo."
+
+Each observation in the dataset corresponds to a survey respondent and one of the 15 headlines they were shown. So the same respondent will appear in 15 different rows of the dataset, one for each headline.
+
+The file fakenews.dta is a database of 156 fake news articles that circulated in the three months before the 2016 election, using lists from three independent third parties: Snopes, PolitiFact, and Buzzfeed. The authors say that this list is reasonable but perhaps not comprehensive.
+
+VARIABLES IN SURVEY.DTA
+
+RespondentID: ID number for survey respondent.
+ArticleQNum: Which of 15 random headlines the respondent is asked about.
+NewsSource_Social: How often respondent consumes social media news.
+NewsSource_Web: How often respondent consumes news from the web.
+Party: Political affiliation before 2016 election. From 1-7: Strongly Democratic, Weakly Democratic, Lean Democratic, Independent, Lean Republican, Weakly Republican, Strongly Republican
+WhenMadeUpMind: When did you make up your mind about who to vote for?
+Educ: Level of schooling:  < HS, HS or GED, some college, associate's degree, bachelor's degree, graduate degree. (labeled 1-6)
+Race: labeled 1-6: Native American, Asian, Black, Hispanic, White, Other
+ZipCode: 
+ShareFriendsPrefSame: Share of your social media friends you think prefer the same presidential candidate as you.
+MediaMinutesPerDay: In the month leading up to the 2016 election, how many minutes per day did you spend reading, watching, or listening to news about the election?
+SocialMediaMinutesPerDay: Of those minutes specified in MediaMinutesPerDay, how many were spent on social media?
+MostImportantSource: Which of these sources was your most important source of news and information about the 2016 election? 
+CensusDivision: Census region of respondent.
+Democrat:
+Independent:
+Republican:
+Voted_Clinton:
+Voted_Trump:
+Undecided:
+Educ_Years: Years of education.
+UseSocialMedia: Whether respondent uses social media.
+Age:
+Male:
+Income: Household income in 1000s.
+ArticleShort: Text snippet from article.
+Heard: Response to whether they heard about article.
+ThoughtTrue: Response to whether they thought article is true.
+ArticleText:
+ShortText:
+ArticleProClinton:
+ArticleProTrump:
+BarLabel: Truth type of article (Big True, Small True, Fake, Placebo).
+ArticleNum: Which of 30 possible headlines the respondent is asked about.
+
+VARIABLES IN FAKENEWS.DTA
+
+TopicID:
+pro: Whether article is pro Clinton or Trump.
+title:
+fb_share: Number of times article was shared on Facebook (in 1000s).
+buzzfeed: Whether the article was obtained by from Buzzfeed's fake news database.
+snopes: Same but for Snopes database.
+politifact: Same but for Politifact database.
+

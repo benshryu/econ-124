@@ -1,0 +1,111 @@
+---
+title: "hw2a"
+output: html_document
+---
+
+```{r setup}
+# Question 1
+data <- read.csv("NBA.csv")
+```
+Question 1:
+Load the dataset into a dataframe, and convert all categorical data into factors
+
+```{r hw2 question 2}
+# Question 2
+is.na(data)
+data_omit <- na.omit(data)
+```
+Question 2:
+Checked for N/A form out data set and dropped into a new data set called data_omit
+
+```{r hw2 question 3}
+# Question 3
+hist(data_omit$Salary,  breaks = 15, main = "Histogram Player Salary", xlab = "Salary", ylab = "Players")
+abline(v = mean(data_omit$Salary), col = "red")  
+mean(data_omit$Salary)
+```
+Question 3:
+What do you learn from the plot?
+Well first of all the histogram is in ordered salary and not player frequency so when we plot abline mean of the salary it is not centered.
+We can see that the mean of the salary is 6,660,622 and that at the 15 bin size the lowest bin salary has the most amount of players and the height of the histogram shrinks as the salary increase.
+
+```{r hw2 question 4}
+# Question 4
+games_played50 <- data_omit[which(data_omit$G >= 50),]
+games_played50[which.max(games_played50$PER),]
+games_played50[which.max(games_played50$TS),]
+games_played50[which.max(games_played50$VORP),]
+```
+Question 4:
+Which player with at least 50 games played led the league in 
+PER? James Harden at 69 games played and 30.2 PER	
+TS? Stephen Curry at 51 games played and 0.675	TS.
+VORP? LeBron James at 78 games played and 8.6 VORP
+
+```{r hw2 question 5}
+# Question 5
+SC <- data_omit[data_omit$Player == "Stephen Curry",]
+length(which(data_omit$PER > SC$PER))/nrow(data_omit)
+length(which(data_omit$TS > SC$TS))/nrow(data_omit)
+length(which(data_omit$VORP > SC$VORP))/nrow(data_omit)
+```
+Question 5:
+What percent of players had a higher PER than Stephen Curry? 1.449275% had higher PER but may had less then 50 games played
+Higher TS? 2.070393 had a higher TS then Curry also doesn't exclude player with less 50 game splayed
+VORP? 2.070393% had a higher VORP then Curry also doesn't exclude player with less 50 game splayed
+
+```{r hw2 question 6}
+# Question 6
+set.seed(0)
+data_omit_usa <- data_omit[data_omit$NBA_Country == "USA",]
+K <- 10
+folds <- rep(1:K,each=ceiling(nrow(data_omit_usa)/K))
+folds
+permute_observations <- sample(1:nrow(data_omit_usa))
+permute_observations
+random_folds <- folds[permute_observations]
+random_folds
+training_set <- random_folds!= 1
+test_set <- random_folds==1
+nrow(data_omit_usa[test_set,])/nrow(data_omit_usa)
+```
+Question 6:
+Created K to be 10 so we can easily make test_set = ~10%, but in-reality it came out to be 10.21505% and rounding it to the nearest intger we have 10%.
+
+```{r hw2 question 7a}
+data_omit_usa_subset <- subset(data_omit_usa, select = -c(1, 3))
+training_data <- data_omit_usa_subset[training_set,]
+OLS <- glm(log(Salary) ~ ., data = training_data)
+sort(abs(coef(OLS)), decreasing = TRUE)
+```
+Question 7a:
+What are the 5 largest slope coefficients in magnitude? in term of absolute magnitude: WS.48 = 18.302271699, TmUTA = 1.696790259, OBPM = 1.466158440, BPM = 1.284026606, TmLAL = 1.121601690
+
+```{r hw2 question 7b}
+#b
+coef(OLS)["TRB."]
+coef(OLS)["AST."]
+coef(OLS)["STL."]
+coef(OLS)["BLK."]
+coef(OLS)["BPM"]
+```
+Question 7b:
+how important are these for determining players’ individual stats for salary?
+Out of the 5, BPM has the greatest effect on a players salary then it is TRB., STL., BLK., AST. in that order.
+
+```{r hw2 question 7c}
+cat("The R^2 is ", 1 - OLS$deviance/OLS$null.deviance, ".", sep = " ", "\n")
+
+test_data <- data_omit_usa_subset[test_set,]
+
+#cant figure out the right formula
+ols_dev <- function(y, pred){
+  return(sum((y-pred)^(2)))
+}
+
+new_y <- test_data$Salary
+ols_pred <- predict(OLS, newdata = test_data)
+mean_pred <- mean(log(training_data$Salary))
+cat("The OOS R^2 is ", 1 - ols_dev(new_y, ols_pred)/ols_dev(new_y, mean_pred), ".", sep = " ")
+
+```
